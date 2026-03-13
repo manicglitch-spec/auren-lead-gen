@@ -1,5 +1,5 @@
 """
-Auren Leads — Flask Backend (v2 — hardened)
+Auren Leads — Flask Backend (v3 — mobile-ready)
 Run: python app.py  →  open http://localhost:5000
 
 Requirements:
@@ -283,7 +283,7 @@ def _run_pipeline():
         _log(f"Cities: {len(cities)} | Categories: {len(cats)}")
 
         # ── PARALLEL SCRAPE ────────────────────────────────────────────
-        _set_progress("Scraping Google Maps & JustDial in parallel…", 5)
+        _set_progress("Scraping Google Maps & JustDial…", 5)
         combos = [
             (c, k)
             for c in random.sample(cities, len(cities))
@@ -385,7 +385,7 @@ def _run_pipeline():
         )
 
         # ── WRITE TO SHEETS ────────────────────────────────────────────
-        _set_progress("Writing to Google Sheets (batch)…", 90)
+        _set_progress("Writing to Google Sheets…", 90)
         _log("📤 Writing to Google Sheets…")
         ws      = _get_sheet(cfg)
         _ensure_header(ws)
@@ -396,14 +396,11 @@ def _run_pipeline():
         s["last_run"]       = datetime.now().isoformat()
         s["last_run_count"] = written
         s["running"]        = False
-        s["progress"]       = f"✅ Done — {written} leads written to Sheet"
+        s["progress"]       = f"✅ Done — {written} leads written"
         s["progress_pct"]   = 100
         s["started_at"]     = None
         save_state(s)
-        _log(
-            f"\n✅ DONE! {written} leads written. "
-            f"All-time total: {s['total_leads']}"
-        )
+        _log(f"\n✅ DONE! {written} leads written. Total: {s['total_leads']}")
         _log("=" * 58)
 
     except Exception as e:
@@ -446,7 +443,6 @@ def _cls(url: str) -> str:
 
 
 def _search_maps(city: str, cat: str, key: str, max_r: int = 8):
-    """Search Google Maps — detail calls are sequential to avoid rate bombs."""
     import requests
     try:
         r = requests.get(
@@ -590,7 +586,6 @@ def _find_email(name: str, city: str, website: str, cfg: dict) -> str:
             if not any(x in e.lower() for x in SKIP) and len(e) < 60
         ]
 
-    # 1. Scrape website — try both "ok" AND "bad" sites (they may have contact info)
     if website and _cls(website) in ("ok", "bad"):
         for pg in [website, website.rstrip("/") + "/contact"]:
             try:
@@ -606,7 +601,6 @@ def _find_email(name: str, city: str, website: str, cfg: dict) -> str:
             except Exception:
                 pass
 
-    # 2. Hunter.io
     hk = cfg.get("hunter_key", "").strip()
     if hk and website:
         try:
@@ -624,7 +618,6 @@ def _find_email(name: str, city: str, website: str, cfg: dict) -> str:
         except Exception:
             pass
 
-    # 3. Google fallback (note: may be rate-limited / CAPTCHAed)
     try:
         r = req.get(
             "https://www.google.com/search",
@@ -656,7 +649,6 @@ def _find_instagram(name: str, city: str, website: str) -> str:
             return f"@{m.group(1)}"
         return None
 
-    # 1. From website links
     if website:
         try:
             r = req.get(website, headers=HDR, timeout=5)
@@ -671,7 +663,6 @@ def _find_instagram(name: str, city: str, website: str) -> str:
         except Exception:
             pass
 
-    # 2. Google search (note: may be rate-limited)
     try:
         r = req.get(
             "https://www.google.com/search",
@@ -716,24 +707,20 @@ def _score(lead: dict) -> int:
 
 
 def _dedup(leads):
-    """Deduplicate by phone number AND by name+city for phoneless leads."""
     by_phone = {}
     by_name  = {}
-
     for l in leads:
         p   = l.get("phone", "").strip()
         nck = (
             l.get("name", "").strip().lower(),
             l.get("city", "").strip().lower(),
         )
-
         if p:
             if p not in by_phone or l.get("score", 0) > by_phone[p].get("score", 0):
                 by_phone[p] = l
         else:
             if nck not in by_name or l.get("score", 0) > by_name[nck].get("score", 0):
                 by_name[nck] = l
-
     combined = list(by_phone.values()) + list(by_name.values())
     return sorted(combined, key=lambda x: x.get("score", 0), reverse=True)
 
@@ -842,13 +829,11 @@ def _scheduler():
 
                 if now_hm == target_time and last_triggered != trigger_key:
                     with _run_lock:
-                        # Double-check inside the lock
                         if load_state().get("running"):
                             continue
                         st = load_state()
                         st["running"] = True
                         save_state(st)
-
                     last_triggered = trigger_key
                     _log(f"[Scheduler] ⏰ Auto-triggered at {now_hm}")
                     threading.Thread(
