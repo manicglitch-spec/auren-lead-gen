@@ -1,11 +1,11 @@
 """
-Auren Leads — Flask Backend (Improved Production Version)
-Run: python app.py → open http://localhost:5000
+Auren Leads Backend
+Stable production version
 """
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import json, os, threading, time, traceback
+import os, json, threading, traceback, time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -13,153 +13,235 @@ app = Flask(__name__)
 CORS(app)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 SETTINGS_FILE = os.path.join(BASE_DIR,"settings.json")
 STATE_FILE = os.path.join(BASE_DIR,"state.json")
 LOG_FILE = os.path.join(BASE_DIR,"run.log")
 
 FRONTEND = os.path.join(BASE_DIR,"frontend","index.html")
 
-# ---------------------------------------------------------
+# ---------------------------------------------------
 # DEFAULT SETTINGS
-# ---------------------------------------------------------
+# ---------------------------------------------------
 
 DEFAULTS = {
 "google_maps_key":"",
 "hunter_key":"",
 "sheet_id":"",
 "creds_json":"",
-"leads_per_run":100,
 "schedule_time":"09:00",
-
+"leads_per_run":50,
 "quality_split":{"no":70,"bad":20,"ok":10},
-
-"active_cities":[
-"Mumbai","Delhi","Bangalore","Pune","Hyderabad","Chennai",
-"Ahmedabad","Kolkata","Jaipur","Surat"
-],
-
-"active_cats":[
-"cafe","restaurant","salon","gym","real estate agent",
-"dental clinic","interior designer","clothing store",
-"jewelry store","coaching institute"
-]
+"active_cities":["Mumbai","Delhi","Bangalore","Pune","Hyderabad"],
+"active_cats":["cafe","restaurant","gym","salon","real estate agent"]
 }
 
-# ---------------------------------------------------------
+# ---------------------------------------------------
 # SETTINGS
-# ---------------------------------------------------------
+# ---------------------------------------------------
 
 def load_settings():
+
     s=dict(DEFAULTS)
+
     if os.path.exists(SETTINGS_FILE):
-        with open(SETTINGS_FILE) as f:
-            s.update(json.load(f))
+
+        try:
+            with open(SETTINGS_FILE) as f:
+                s.update(json.load(f))
+        except:
+            pass
+
     return s
 
+
 def save_settings(data):
+
     s=load_settings()
     s.update(data)
+
     with open(SETTINGS_FILE,"w") as f:
         json.dump(s,f,indent=2)
 
-# ---------------------------------------------------------
+
+# ---------------------------------------------------
 # STATE
-# ---------------------------------------------------------
+# ---------------------------------------------------
 
 def load_state():
+
     if os.path.exists(STATE_FILE):
-        with open(STATE_FILE) as f:
-            return json.load(f)
+
+        try:
+            with open(STATE_FILE) as f:
+                return json.load(f)
+        except:
+            pass
 
     return {
-        "automation_on":False,
         "running":False,
         "progress":"",
         "progress_pct":0,
         "last_error":"",
-        "last_run":None,
-        "total_leads":0
+        "total_leads":0,
+        "last_run":None
     }
 
+
 def save_state(s):
+
     with open(STATE_FILE,"w") as f:
         json.dump(s,f,indent=2)
 
-# ---------------------------------------------------------
+
+# ---------------------------------------------------
 # LOGGING
-# ---------------------------------------------------------
+# ---------------------------------------------------
 
-def _log(msg):
+def log(msg):
+
     print(msg)
-    with open(LOG_FILE,"a") as f:
-        f.write(msg+"\n")
 
-# ---------------------------------------------------------
-# API ROUTES
-# ---------------------------------------------------------
+    try:
+        with open(LOG_FILE,"a") as f:
+            f.write(msg+"\n")
+    except:
+        pass
+
+
+# ---------------------------------------------------
+# API ROUTES (REQUIRED BY FRONTEND)
+# ---------------------------------------------------
 
 @app.route("/api/settings",methods=["GET"])
-def api_get_settings():
+def api_settings():
+
     s=load_settings()
+
     safe={k:v for k,v in s.items() if k!="creds_json"}
+
     safe["has_creds"]=bool(s.get("creds_json"))
+
     return jsonify(safe)
 
+
 @app.route("/api/settings",methods=["POST"])
-def api_post_settings():
-    save_settings(request.json)
+def api_settings_save():
+
+    data=request.get_json(force=True,silent=True) or {}
+
+    save_settings(data)
+
     return jsonify({"ok":True})
+
 
 @app.route("/api/state")
 def api_state():
+
     return jsonify(load_state())
+
 
 @app.route("/api/run-now",methods=["POST"])
 def api_run_now():
 
     s=load_state()
 
-    if s["running"]:
-        return jsonify({"ok":False,"msg":"already running"})
+    if s.get("running"):
+        return jsonify({"ok":False,"msg":"Already running"})
 
-    threading.Thread(target=_run_pipeline,daemon=True).start()
+    threading.Thread(target=run_pipeline,daemon=True).start()
 
     return jsonify({"ok":True})
 
-# ---------------------------------------------------------
+
+@app.route("/api/logs")
+def api_logs():
+
+    try:
+
+        with open(LOG_FILE) as f:
+            lines=f.readlines()[-120:]
+
+        return jsonify({"log":"".join(lines)})
+
+    except:
+        return jsonify({"log":""})
+
+
+@app.route("/api/leads")
+def api_leads():
+
+    return jsonify({"leads":[]})
+
+
+@app.route("/api/verify-keys",methods=["POST"])
+def verify_keys():
+
+    import requests
+
+    cfg=load_settings()
+
+    res={}
+
+    key=cfg.get("google_maps_key","")
+
+    if key:
+
+        try:
+
+            r=requests.get(
+            "https://maps.googleapis.com/maps/api/place/textsearch/json",
+            params={"query":"cafe in Mumbai","key":key},
+            timeout=10
+            )
+
+            st=r.json().get("status","ERROR")
+
+            res["google_maps"]="ok" if st in ("OK","ZERO_RESULTS") else st
+
+        except Exception as e:
+
+            res["google_maps"]=str(e)
+
+    else:
+
+        res["google_maps"]="not set"
+
+    return jsonify(res)
+
+
+# ---------------------------------------------------
 # SCRAPING HELPERS
-# ---------------------------------------------------------
+# ---------------------------------------------------
 
-BAD_DOMAINS=[
-"wix.com","weebly.com","blogspot.com","wordpress.com",
-"business.site","sites.google.com","carrd.co"
-]
+BAD_DOMAINS=["wix","weebly","blogspot","wordpress","sites.google"]
 
-HDR={
-"User-Agent":"Mozilla/5.0"
-}
 
-def _cls(url):
+def website_status(url):
+
     if not url:
         return "none"
 
     u=url.lower()
 
     for d in BAD_DOMAINS:
+
         if d in u:
             return "bad"
 
     return "ok"
 
-# ---------------------------------------------------------
-# GOOGLE MAPS SEARCH WITH PAGINATION
-# ---------------------------------------------------------
 
-def _search_maps(city,cat,key,max_r=30):
+# ---------------------------------------------------
+# GOOGLE MAPS SEARCH (PAGINATED)
+# ---------------------------------------------------
+
+def search_maps(city,cat,key):
 
     import requests
 
     results=[]
+
     token=None
 
     for _ in range(3):
@@ -175,7 +257,7 @@ def _search_maps(city,cat,key,max_r=30):
         r=requests.get(
         "https://maps.googleapis.com/maps/api/place/textsearch/json",
         params=params,
-        timeout=12
+        timeout=10
         )
 
         if r.status_code!=200:
@@ -192,61 +274,14 @@ def _search_maps(city,cat,key,max_r=30):
 
         time.sleep(2)
 
-    pids=[p["place_id"] for p in results[:max_r]]
+    return results
 
-    detailed=[]
 
-    with ThreadPoolExecutor(max_workers=6) as ex:
-        for d in ex.map(lambda pid:_maps_detail(pid,key),pids):
-            if d:
-                detailed.append(d)
-
-    return detailed
-
-def _maps_detail(pid,key):
-
-    import requests
-
-    try:
-
-        r=requests.get(
-        "https://maps.googleapis.com/maps/api/place/details/json",
-        params={
-        "place_id":pid,
-        "fields":"name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,url",
-        "key":key
-        },
-        timeout=8
-        )
-
-        if r.status_code!=200:
-            return None
-
-        res=r.json().get("result",{})
-
-        w=res.get("website","")
-
-        return {
-
-        "name":res.get("name",""),
-        "address":res.get("formatted_address",""),
-        "phone":res.get("formatted_phone_number",""),
-        "website":w,
-        "website_status":_cls(w),
-        "rating":res.get("rating",0),
-        "reviews":res.get("user_ratings_total",0),
-        "maps_url":res.get("url",""),
-        "source":"Google Maps"
-        }
-
-    except:
-        return None
-
-# ---------------------------------------------------------
+# ---------------------------------------------------
 # LINKEDIN FINDER
-# ---------------------------------------------------------
+# ---------------------------------------------------
 
-def _find_linkedin(name,city):
+def find_linkedin(name,city):
 
     import requests,re
 
@@ -255,7 +290,6 @@ def _find_linkedin(name,city):
         r=requests.get(
         "https://www.google.com/search",
         params={"q":f'"{name}" "{city}" site:linkedin.com/company'},
-        headers=HDR,
         timeout=5
         )
 
@@ -269,63 +303,12 @@ def _find_linkedin(name,city):
 
     return ""
 
-# ---------------------------------------------------------
-# EMAIL FINDER
-# ---------------------------------------------------------
 
-def _find_email(name,city,website,cfg):
-
-    import requests,re
-
-    ER=re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}")
-
-    if website:
-
-        try:
-            r=requests.get(website,timeout=4)
-
-            emails=ER.findall(r.text)
-
-            if emails:
-                return emails[0]
-
-        except:
-            pass
-
-    return ""
-
-# ---------------------------------------------------------
-# INSTAGRAM FINDER
-# ---------------------------------------------------------
-
-def _find_instagram(name,city,website):
-
-    import requests,re
-
-    try:
-
-        r=requests.get(
-        "https://www.google.com/search",
-        params={"q":f'site:instagram.com "{name}" {city}'},
-        headers=HDR,
-        timeout=5
-        )
-
-        m=re.search(r"instagram\.com/[a-zA-Z0-9_.]+",r.text)
-
-        if m:
-            return "@"+m.group().split("/")[-1]
-
-    except:
-        pass
-
-    return ""
-
-# ---------------------------------------------------------
+# ---------------------------------------------------
 # SCORING
-# ---------------------------------------------------------
+# ---------------------------------------------------
 
-def _score(lead):
+def score(lead):
 
     s=0
 
@@ -333,59 +316,56 @@ def _score(lead):
 
     if ws=="none":
         s+=50
-
     elif ws=="bad":
         s+=25
 
     if lead.get("phone"):
         s+=15
 
-    if lead.get("email"):
-        s+=20
-
-    if lead.get("instagram"):
-        s+=10
-
     if lead.get("linkedin"):
         s+=10
 
     try:
-        if float(lead.get("rating",0))>=4.3:
+        if float(lead.get("rating",0))>=4.2:
             s+=10
     except:
         pass
 
     return min(s,100)
 
-# ---------------------------------------------------------
-# PIPELINE
-# ---------------------------------------------------------
 
-def _run_pipeline():
+# ---------------------------------------------------
+# PIPELINE
+# ---------------------------------------------------
+
+def run_pipeline():
 
     s=load_state()
+
     s["running"]=True
-    s["progress"]="Starting..."
+    s["progress"]="Starting"
+    s["progress_pct"]=0
+
     save_state(s)
 
     try:
 
         cfg=load_settings()
 
-        cities=cfg["active_cities"]
-        cats=cfg["active_cats"]
+        key=cfg.get("google_maps_key")
 
-        target=cfg["leads_per_run"]
+        cities=cfg.get("active_cities")
+        cats=cfg.get("active_cats")
 
-        key=cfg["google_maps_key"]
+        target=cfg.get("leads_per_run")
 
         raw=[]
 
         combos=[(c,k) for c in cities for k in cats]
 
-        with ThreadPoolExecutor(max_workers=16) as ex:
+        with ThreadPoolExecutor(max_workers=12) as ex:
 
-            futures=[ex.submit(_search_maps,c,k,key) for c,k in combos]
+            futures=[ex.submit(search_maps,c,k,key) for c,k in combos]
 
             for fut in as_completed(futures):
 
@@ -394,34 +374,30 @@ def _run_pipeline():
                 if len(raw)>=target*3:
                     break
 
-        _log(f"raw pool {len(raw)}")
-
         enriched=[]
 
-        def enrich(l):
+        for r in raw[:target*2]:
 
-            l["email"]=_find_email(l["name"],"",l.get("website",""),cfg)
+            lead={
+            "name":r.get("name"),
+            "rating":r.get("rating",0),
+            "website":r.get("website",""),
+            "phone":r.get("formatted_phone_number",""),
+            }
 
-            l["instagram"]=_find_instagram(l["name"],"",l.get("website",""))
+            lead["website_status"]=website_status(lead["website"])
 
-            l["linkedin"]=_find_linkedin(l["name"],"")
+            lead["linkedin"]=find_linkedin(lead["name"],"")
 
-            l["score"]=_score(l)
+            lead["score"]=score(lead)
 
-            return l
+            enriched.append(lead)
 
-        with ThreadPoolExecutor(max_workers=20) as ex:
-
-            futures=[ex.submit(enrich,l) for l in raw[:target*2]]
-
-            for fut in as_completed(futures):
-                enriched.append(fut.result())
-
-        enriched=sorted(enriched,key=lambda x:x["score"],reverse=True)
+        enriched.sort(key=lambda x:x["score"],reverse=True)
 
         final=enriched[:target]
 
-        _log(f"final leads {len(final)}")
+        log(f"Generated {len(final)} leads")
 
         s=load_state()
 
@@ -434,9 +410,7 @@ def _run_pipeline():
 
     except Exception as e:
 
-        err=traceback.format_exc()
-
-        _log(err)
+        log(traceback.format_exc())
 
         s=load_state()
 
@@ -445,30 +419,42 @@ def _run_pipeline():
 
         save_state(s)
 
-# ---------------------------------------------------------
-# SERVE FRONTEND
-# ---------------------------------------------------------
+
+# ---------------------------------------------------
+# FRONTEND
+# ---------------------------------------------------
 
 @app.route("/")
 def index():
 
     try:
+
         with open(FRONTEND) as f:
             return f.read()
 
     except:
         return "<h1>Frontend missing</h1>"
 
+
 @app.route("/health")
 def health():
+
     return jsonify({"status":"ok","time":datetime.now().isoformat()})
 
-# ---------------------------------------------------------
+
+# ---------------------------------------------------
 # RUN
-# ---------------------------------------------------------
+# ---------------------------------------------------
 
 if __name__=="__main__":
 
-    print("\nAuren Leads running on http://localhost:5000\n")
+    print("Auren backend running")
 
     app.run(host="0.0.0.0",port=5000)
+    if __name__=="__main__":
+
+    port=int(os.environ.get("PORT",5000))
+
+    print("Auren backend running")
+
+    app.run(host="0.0.0.0",port=port)
