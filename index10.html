@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Auren Leads</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0C0D11;--bg2:#12131A;--bg3:#181924;--bg4:#1E1F2C;
+  --border:#252637;--border2:#2E3048;--mute:#484A6A;--dim:#6E7099;
+  --sub:#9294B8;--text:#E8E9FF;--bright:#FFFFFF;
+  --gold:#C9A84C;--gold2:#E2C170;--gold3:#F5D98A;
+  --golddim:rgba(201,168,76,.12);--goldglow:rgba(201,168,76,.25);
+  --red:#FF4F6A;--reddim:rgba(255,79,106,.12);
+  --green:#00D68A;--greendim:rgba(0,214,138,.1);
+  --blue:#5B7FFF;
+  --r:5px;--r2:10px;--r3:14px;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:var(--font);font-size:14px;-webkit-font-smoothing:antialiased;overflow:hidden}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── LAYOUT ─────────────────────────────── */
+.shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:56px 1fr;height:100vh}
+
+/* ── TOPBAR ─────────────────────────────── */
+.topbar{
+  grid-column:1/-1;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 1.4rem;gap:.8rem;z-index:20;
+}
+.tb-logo{display:flex;align-items:center;gap:.6rem;width:220px;
+  padding-right:1rem;border-right:1px solid var(--border);flex-shrink:0}
+.tb-brand .name{font-size:.95rem;font-weight:700;color:var(--bright);letter-spacing:-.01em;line-height:1}
+.tb-brand .tag{font-size:.58rem;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:.15rem}
+.tb-tabs{display:flex;gap:.1rem;margin-left:1rem}
+.tt{padding:.36rem .9rem;border-radius:var(--r2);font-size:.8rem;font-weight:500;
+  cursor:pointer;color:var(--dim);transition:all .15s;border:1px solid transparent}
+.tt.active,.tt:hover{background:var(--bg4);color:var(--text);border-color:var(--border)}
+.tt.active{color:var(--gold)}
+.tb-r{display:flex;align-items:center;gap:.5rem;margin-left:auto}
+.status-pill{display:flex;align-items:center;gap:.45rem;padding:.3rem .75rem;
+  border-radius:var(--r2);background:var(--bg3);border:1px solid var(--border);
+  font-size:.73rem;color:var(--dim);font-family:var(--mono)}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s}
+.dot.idle{background:var(--mute)}
+.dot.on{background:var(--gold);box-shadow:0 0 6px var(--goldglow)}
+.dot.run{background:var(--gold2);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 8px var(--goldglow)}50%{opacity:.3;box-shadow:none}}
+
+/* ── BUTTONS ─────────────────────────────── */
+.btn{padding:.38rem 1rem;border-radius:var(--r2);font-size:.8rem;font-weight:600;
+  cursor:pointer;border:1px solid transparent;font-family:var(--font);
+  display:inline-flex;align-items:center;gap:.35rem;transition:all .15s;
+  white-space:nowrap}
+.btn-gold{background:linear-gradient(135deg,var(--gold2),var(--gold),#A8893C);
+  color:#0C0D11;border-color:var(--gold3);font-weight:700}
+.btn-gold:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 4px 18px var(--goldglow)}
+.btn-gold:disabled{opacity:.4;cursor:not-allowed;transform:none!important;filter:none!important;box-shadow:none!important}
+.btn-ghost{background:transparent;color:var(--sub);border-color:var(--border2)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.btn-sm{padding:.28rem .7rem;font-size:.75rem}
+.btn-danger{background:var(--reddim);color:var(--red);border-color:rgba(255,79,106,.3)}
+.btn-danger:hover{background:rgba(255,79,106,.2)}
+
+/* ── SIDEBAR ─────────────────────────────── */
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:.75rem .6rem;overflow:hidden}
+.nl{font-size:.62rem;font-weight:600;color:var(--mute);letter-spacing:.12em;
+  text-transform:uppercase;padding:.15rem .55rem .45rem;margin-top:.35rem}
+.ni{display:flex;align-items:center;gap:.6rem;padding:.5rem .68rem;border-radius:var(--r2);
+  font-size:.82rem;font-weight:500;color:var(--dim);cursor:pointer;transition:all .14s;
+  border:1px solid transparent;margin-bottom:1px;position:relative}
+.ni .ico{width:26px;height:26px;border-radius:var(--r);background:var(--bg3);
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
+  font-size:.78rem;flex-shrink:0;transition:all .14s}
+.ni:hover{color:var(--text);background:var(--bg3)}
+.ni.active{color:var(--gold2);background:var(--golddim);border-color:rgba(201,168,76,.2)}
+.ni.active .ico{border-color:rgba(201,168,76,.35);color:var(--gold)}
+.ni.active::before{content:'';position:absolute;left:-1px;top:20%;bottom:20%;
+  width:2px;border-radius:99px;background:linear-gradient(var(--gold2),var(--gold))}
+.nsep{height:1px;background:var(--border);margin:.45rem .2rem}
+.sb-foot{margin-top:auto;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--r3);padding:.9rem;overflow:hidden;position:relative}
+.sb-foot::after{content:'';position:absolute;top:-20px;right:-20px;width:70px;height:70px;
+  border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.15),transparent 70%)}
+.sb-foot h4{font-size:.78rem;font-weight:600;color:var(--text);margin-bottom:.2rem}
+.sb-foot p{font-size:.68rem;color:var(--dim);line-height:1.5;margin-bottom:.6rem}
+.split-mini{font-family:var(--mono);font-size:.7rem}
+.split-mini div{display:flex;justify-content:space-between;margin-bottom:.12rem}
+
+/* ── MAIN ─────────────────────────────────── */
+.main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.content{flex:1;overflow-y:auto;padding:1.4rem 1.6rem}
+.page{display:none;animation:fi .18s ease}
+.page.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+/* ── PAGE HEADER ─────────────────────────── */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.2rem}
+.ph h1{font-size:1.35rem;font-weight:700;color:var(--bright);letter-spacing:-.02em;line-height:1}
+.ph p{font-size:.76rem;color:var(--dim);margin-top:.28rem}
+.ph-r{display:flex;gap:.45rem;align-items:center}
+
+/* ── STAT CARDS ──────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1rem}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);
+  padding:1rem 1.2rem;position:relative;overflow:hidden;transition:border-color .2s}
+.sc:hover{border-color:var(--border2)}
+.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(201,168,76,.35),transparent);
+  opacity:0;transition:opacity .3s}
+.sc:hover::after{opacity:1}
+.sc-lbl{font-size:.62rem;font-weight:600;color:var(--mute);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:.45rem}
+.sc-val{font-size:1.7rem;font-weight:700;color:var(--bright);letter-spacing:-.02em;line-height:1}
+.sc-val.gold{background:linear-gradient(135deg,var(--gold3),var(--gold2),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sc-sub{font-size:.68rem;color:var(--dim);margin-top:.3rem}
+
+/* ── CARD ────────────────────────────────── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);
+  padding:1.1rem 1.25rem;position:relative}
+.card-t{font-size:.83rem;font-weight:600;color:var(--text);
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem}
+.card-t .s{font-size:.7rem;font-weight:400;color:var(--dim)}
+.divider{height:1px;background:var(--border);margin:.85rem 0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;margin-bottom:.8rem}
+.full{margin-bottom:.8rem}
+
+/* ── RUN BANNER ──────────────────────────── */
+.run-banner{background:var(--bg3);border:1px solid rgba(201,168,76,.3);
+  border-left:3px solid var(--gold);border-radius:var(--r3);
+  padding:.85rem 1.1rem;margin-bottom:1rem;display:none}
+.rb-top{display:flex;align-items:center;gap:.8rem}
+.spin{width:15px;height:15px;border:2px solid var(--border2);border-top-color:var(--gold);
+  border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+.rb-txt{font-size:.82rem;color:var(--sub);flex:1}
+.rb-txt strong{color:var(--gold2)}
+.rb-timer{font-size:.78rem;font-family:var(--mono);color:var(--gold3);font-weight:500}
+.rb-prog{margin-top:.7rem}
+.prog-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:.35rem}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold3));
+  border-radius:2px;transition:width .5s ease;animation:shim 2s infinite}
+@keyframes shim{0%{filter:brightness(1)}50%{filter:brightness(1.4)}100%{filter:brightness(1)}}
+.prog-lbl{font-size:.68rem;color:var(--dim);font-family:var(--mono)}
+
+/* ── TOGGLE ──────────────────────────────── */
+.swt{position:relative;width:40px;height:21px;flex-shrink:0}
+.swt input{opacity:0;width:0;height:0}
+.stt{position:absolute;inset:0;cursor:pointer;background:var(--bg4);
+  border-radius:99px;transition:.2s;border:1px solid var(--border2)}
+.stt::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;
+  background:var(--mute);border-radius:50%;transition:.2s}
+input:checked+.stt{background:rgba(201,168,76,.2);border-color:var(--gold)}
+input:checked+.stt::before{transform:translateX(19px);
+  background:linear-gradient(135deg,var(--gold2),var(--gold))}
+
+/* ── SPLIT BAR ───────────────────────────── */
+.split-labels{display:flex;justify-content:space-between;font-size:.7rem;
+  color:var(--dim);margin-bottom:.4rem;font-family:var(--mono)}
+.split-labels strong{color:var(--text)}
+.split-track{height:8px;background:var(--border);border-radius:99px;position:relative;cursor:crosshair}
+.sno{position:absolute;left:0;top:0;height:100%;background:var(--red);
+  border-radius:99px 0 0 99px;pointer-events:none;transition:width .06s}
+.sbad{position:absolute;top:0;height:100%;
+  background:linear-gradient(90deg,var(--gold3),var(--gold));pointer-events:none;transition:left .06s,width .06s}
+.sok{position:absolute;top:0;right:0;height:100%;background:var(--border2);
+  border-radius:0 99px 99px 0;pointer-events:none}
+.thumb{position:absolute;top:50%;transform:translate(-50%,-50%);
+  width:14px;height:14px;border-radius:50%;cursor:ew-resize;z-index:3;
+  border:2px solid var(--bg2);box-shadow:0 0 0 1.5px var(--border2);transition:box-shadow .15s}
+.thumb:hover,.thumb:active{box-shadow:0 0 0 3px var(--goldglow)}
+.th-no{background:var(--red)}
+.th-bad{background:var(--gold)}
+.split-inputs{display:flex;gap:.8rem;margin-top:.65rem}
+.si label{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--mute);font-weight:600;margin-bottom:.25rem}
+.si input{width:58px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);
+  border-radius:var(--r);padding:.28rem .4rem;font-size:.78rem;font-family:var(--mono);
+  text-align:center;transition:border-color .14s}
+.si input:focus{outline:none;border-color:rgba(201,168,76,.5)}
+.si-row{display:flex;align-items:center;gap:.28rem}
+.pct{font-size:.7rem;color:var(--dim)}
+.split-legend{display:flex;gap:.9rem;flex-wrap:wrap;margin-top:.6rem}
+.sleg{display:flex;align-items:center;gap:.28rem;font-size:.67rem;color:var(--dim)}
+.sleg-dot{width:6px;height:6px;border-radius:50%}
+
+/* ── TOGGLES (city/cat) ──────────────────── */
+.tg{display:flex;flex-wrap:wrap;gap:.35rem}
+.tog{padding:.3rem .68rem;border-radius:var(--r2);font-size:.73rem;border:1px solid var(--border);
+  color:var(--mute);cursor:pointer;font-family:var(--mono);background:transparent;
+  transition:all .17s cubic-bezier(.4,0,.2,1);user-select:none}
+.tog:hover{border-color:var(--border2);color:var(--sub);background:var(--bg3)}
+.tog.on{border-color:var(--gold);color:#0C0D11;font-weight:700;
+  background:linear-gradient(135deg,var(--gold2),var(--gold),#A8893C);
+  box-shadow:0 0 10px var(--goldglow),0 2px 5px rgba(0,0,0,.4);transform:translateY(-1px)}
+.tg-ctrl{display:flex;gap:.3rem}
+.tgb{padding:.26rem .68rem;border-radius:var(--r);font-size:.72rem;font-weight:500;
+  border:1px solid var(--border2);color:var(--sub);cursor:pointer;
+  background:transparent;font-family:var(--font);transition:all .13s}
+.tgb:hover{background:var(--bg3);color:var(--text)}
+.tgb.all{border-color:rgba(201,168,76,.4);color:var(--gold);background:var(--golddim)}
+
+/* ── LEADS PICKER ────────────────────────── */
+.ld-pick{display:flex;gap:.35rem}
+.ld-opt{padding:.32rem .85rem;border-radius:var(--r2);font-size:.82rem;
+  border:1px solid var(--border);color:var(--mute);cursor:pointer;
+  font-family:var(--mono);font-weight:600;background:transparent;
+  transition:all .17s cubic-bezier(.4,0,.2,1)}
+.ld-opt:hover{border-color:var(--border2);color:var(--sub);background:var(--bg3)}
+.ld-opt.sel{border-color:var(--gold);color:#0C0D11;
+  background:linear-gradient(135deg,var(--gold2),var(--gold),#A8893C);
+  box-shadow:0 0 12px var(--goldglow);transform:translateY(-1px)}
+
+/* ── ETA BOX ─────────────────────────────── */
+.eta-box{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);
+  padding:.8rem 1rem;font-size:.75rem;color:var(--dim);font-family:var(--mono);line-height:2}
+.eta-box strong{color:var(--gold2);font-weight:600}
+
+/* ── SETTINGS FORM ───────────────────────── */
+.field{margin-bottom:.8rem}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:.64rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--mute);margin-bottom:.28rem}
+.field input,.field textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);
+  color:var(--text);border-radius:var(--r2);padding:.46rem .75rem;font-size:.8rem;
+  font-family:var(--font);transition:border-color .14s;outline:none}
+.field input:focus,.field textarea:focus{border-color:rgba(201,168,76,.5);
+  box-shadow:0 0 0 3px rgba(201,168,76,.06)}
+.field textarea{resize:vertical;min-height:90px;font-family:var(--mono);font-size:.68rem;line-height:1.6}
+.field .hint{font-size:.67rem;color:var(--dim);margin-top:.25rem;line-height:1.5}
+.field .hint a{color:var(--gold2)}
+.vrow{display:flex;align-items:center;gap:.5rem;margin-top:.4rem;flex-wrap:wrap}
+.vs{font-size:.73rem;font-family:var(--mono)}
+.vs.ok{color:var(--green)} .vs.err{color:var(--red)} .vs.checking{color:var(--dim)}
+.creds-ok{font-size:.7rem;color:var(--green);font-family:var(--mono);margin-left:.3rem}
+
+/* ── LEADS TABLE ─────────────────────────── */
+.ttbar{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem;flex-wrap:wrap}
+.srch{flex:1;min-width:180px;background:var(--bg2);border:1px solid var(--border2);
+  color:var(--text);border-radius:var(--r2);padding:.4rem .85rem;font-size:.8rem;
+  font-family:var(--font);outline:none;transition:border-color .14s}
+.srch:focus{border-color:rgba(201,168,76,.4)}
+.srch::placeholder{color:var(--mute)}
+.fp{padding:.26rem .62rem;border-radius:99px;font-size:.7rem;border:1px solid var(--border);
+  color:var(--mute);cursor:pointer;background:transparent;font-family:var(--mono);transition:all .13s}
+.fp.on{border-color:rgba(201,168,76,.5);color:var(--gold);background:var(--golddim)}
+.fp:hover:not(.on){border-color:var(--border2);color:var(--sub)}
+.tw{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);overflow:hidden}
+.tw-head{display:flex;align-items:center;justify-content:space-between;
+  padding:.75rem 1.15rem;border-bottom:1px solid var(--border);background:var(--bg3)}
+.tw-title{font-size:.83rem;font-weight:600;color:var(--text)}
+.tw-cnt{font-size:.7rem;color:var(--mute);font-family:var(--mono)}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+th{padding:.5rem 1rem;text-align:left;font-size:.6rem;font-weight:600;color:var(--mute);
+  text-transform:uppercase;letter-spacing:.1em;background:var(--bg3);
+  border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:.6rem 1rem;border-bottom:1px solid rgba(37,38,55,.7);vertical-align:middle;
+  max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.012)}
+.bn{font-weight:600;color:var(--bright);font-size:.79rem}
+.bsub{font-size:.66rem;color:var(--dim);margin-top:.06rem}
+.wb{display:inline-block;padding:.13rem .42rem;border-radius:var(--r);
+  font-size:.62rem;font-weight:700;letter-spacing:.04em;font-family:var(--mono)}
+.w-none{background:var(--reddim);color:var(--red);border:1px solid rgba(255,79,106,.25)}
+.w-bad{background:var(--golddim);color:var(--gold2);border:1px solid rgba(201,168,76,.25)}
+.w-ok{background:rgba(148,148,200,.07);color:var(--sub);border:1px solid var(--border2)}
+.sr{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.63rem;font-family:var(--mono);font-weight:700;border:1.5px solid var(--border2)}
+.sr.hot{border-color:var(--gold);color:var(--gold2);background:var(--golddim)}
+.sr.warm{border-color:var(--border2);color:var(--sub)}
+.sr.cold{border-color:var(--border);color:var(--mute)}
+.ig{color:var(--gold2);font-family:var(--mono);font-size:.71rem}
+.no-ig{color:var(--border2);font-size:.71rem}
+.et{padding:3rem 2rem;text-align:center;font-size:.85rem;color:var(--dim)}
+
+/* ── LOGS ─────────────────────────────────── */
+.log-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);
+  padding:1rem;height:calc(100vh - 170px);overflow-y:auto;
+  font-family:var(--mono);font-size:.73rem;line-height:1.85;white-space:pre-wrap;color:var(--dim)}
+.lok{color:var(--gold2)} .lerr{color:var(--red)} .linfo{color:var(--blue)} .lhead{color:var(--bright);font-weight:600}
+
+/* ── MODAL (run timer) ───────────────────── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;
+  display:none;align-items:center;justify-content:center;animation:mfi .15s}
+.modal-bg.open{display:flex}
+@keyframes mfi{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r3);
+  padding:2rem;width:420px;max-width:90vw;position:relative;
+  box-shadow:0 24px 80px rgba(0,0,0,.8)}
+.modal h2{font-size:1.1rem;font-weight:700;color:var(--bright);margin-bottom:.3rem;letter-spacing:-.01em}
+.modal p{font-size:.8rem;color:var(--dim);margin-bottom:1.3rem;line-height:1.6}
+.modal-timer{text-align:center;padding:1.2rem;background:var(--bg3);
+  border-radius:var(--r2);border:1px solid var(--border2);margin-bottom:1.2rem}
+.timer-val{font-size:2.8rem;font-weight:700;font-family:var(--mono);
+  background:linear-gradient(135deg,var(--gold3),var(--gold2),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:-.02em;line-height:1}
+.timer-lbl{font-size:.68rem;color:var(--dim);margin-top:.3rem;text-transform:uppercase;letter-spacing:.1em}
+.modal-details{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.2rem}
+.md-item{background:var(--bg3);border-radius:var(--r2);padding:.65rem .85rem;
+  border:1px solid var(--border)}
+.md-item .k{font-size:.62rem;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.md-item .v{font-size:.88rem;font-weight:600;color:var(--text)}
+.modal-prog-wrap{margin-bottom:1.2rem}
+.modal-prog-lbl{display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:.3rem}
+.modal-prog-lbl span{color:var(--dim);font-family:var(--mono)}
+.modal-prog-lbl strong{color:var(--gold2)}
+.modal-prog-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.modal-prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold3));
+  border-radius:3px;transition:width .5s;animation:shim 2s infinite}
+.modal-status{font-size:.76rem;color:var(--sub);font-family:var(--mono);
+  text-align:center;min-height:1.2em;margin-bottom:1rem}
+.modal-actions{display:flex;gap:.5rem;justify-content:flex-end}
+
+/* ── TOAST ────────────────────────────────── */
+#toast{position:fixed;bottom:1.3rem;right:1.3rem;z-index:999;
+  background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r3);
+  padding:.7rem 1.1rem;font-size:.8rem;display:none;
+  box-shadow:0 12px 40px rgba(0,0,0,.65);animation:tfi .2s ease;max-width:320px}
+#toast.ok{border-color:rgba(201,168,76,.45);color:var(--gold2)}
+#toast.err{border-color:rgba(255,79,106,.45);color:var(--red)}
+#toast.info{border-color:var(--border2);color:var(--sub)}
+@keyframes tfi{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+
+/* ── WARN BANNER ─────────────────────────── */
+#file-warn{position:fixed;top:0;left:0;right:0;z-index:200;
+  background:#FF4F6A;color:#fff;padding:.75rem 1.5rem;font-size:.85rem;
+  font-weight:600;text-align:center;display:none}
+
+/* ── MISC ─────────────────────────────────── */
+.label{font-size:.63rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--mute);margin-bottom:.28rem;display:block}
+.row{display:flex;align-items:center;gap:.5rem}
+</style>
+</head>
+<body>
+
+<!-- File:// warning -->
+<div id="file-warn">
+  ⚠️ You opened this as a file — that won't work! Run <strong>python app.py</strong> in Terminal, then open <strong>http://localhost:5000</strong>
+</div>
+
+<!-- Run Timer Modal -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h2>⚡ Pipeline Running</h2>
+    <p>Scraping Maps + JustDial in parallel, enriching emails & Instagram. Don't close this window.</p>
+    <div class="modal-timer">
+      <div class="timer-val" id="timer-val">00:00</div>
+      <div class="timer-lbl">elapsed</div>
+    </div>
+    <div class="modal-details">
+      <div class="md-item"><div class="k">Target Leads</div><div class="v" id="md-leads">—</div></div>
+      <div class="md-item"><div class="k">Est. Time</div><div class="v" id="md-eta">—</div></div>
+      <div class="md-item"><div class="k">Cities Active</div><div class="v" id="md-cities">—</div></div>
+      <div class="md-item"><div class="k">Categories</div><div class="v" id="md-cats">—</div></div>
+    </div>
+    <div class="modal-prog-wrap">
+      <div class="modal-prog-lbl">
+        <span id="mp-lbl">Initialising…</span>
+        <strong id="mp-pct">0%</strong>
+      </div>
+      <div class="modal-prog-track"><div class="modal-prog-fill" id="mp-fill" style="width:0%"></div></div>
+    </div>
+    <div class="modal-status" id="modal-status">Starting pipeline…</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" id="modal-close-btn" onclick="closeModal()" disabled>Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="tb-logo">
+    <svg viewBox="0 0 100 90" width="26" height="26" fill="none">
+      <polygon points="0,90 14,90 58,0 44,0" fill="#C9A84C"/>
+      <polygon points="44,0 58,0 72,30 58,30" fill="#E2C170"/>
+      <polygon points="40,55 100,55 100,70 54,70" fill="#C9A84C"/>
+      <polygon points="86,70 100,70 100,90 86,90" fill="#A8893C"/>
+    </svg>
+    <div class="tb-brand">
+      <div class="name">Auren</div>
+      <div class="tag">Lead Intelligence</div>
+    </div>
+  </div>
+  <div class="tb-tabs">
+    <div class="tt active" data-page="dashboard" onclick="nav('dashboard',this)">Dashboard</div>
+    <div class="tt" data-page="leads" onclick="nav('leads',this)">Leads</div>
+    <div class="tt" data-page="settings" onclick="nav('settings',this)">Settings</div>
+    <div class="tt" data-page="logs" onclick="nav('logs',this)">Logs</div>
+  </div>
+  <div class="tb-r">
+    <div class="status-pill">
+      <div class="dot idle" id="sb-dot"></div>
+      <span id="sb-txt" style="font-family:var(--mono);font-size:.72rem">Idle</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="nav('settings',null)">⚙ Settings</button>
+    <button class="btn btn-gold" id="run-btn" onclick="confirmRun()">⚡ Run Now</button>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="nl">Menu</div>
+  <div class="ni active" data-page="dashboard" onclick="navSide('dashboard',this)">
+    <div class="ico">◈</div>Dashboard
+  </div>
+  <div class="ni" data-page="leads" onclick="navSide('leads',this)">
+    <div class="ico">≡</div>Leads
+  </div>
+  <div class="nsep"></div>
+  <div class="ni" data-page="settings" onclick="navSide('settings',this)">
+    <div class="ico">◎</div>Settings
+  </div>
+  <div class="ni" data-page="logs" onclick="navSide('logs',this)">
+    <div class="ico">▤</div>Run Logs
+  </div>
+  <div class="sb-foot">
+    <h4>Quality Split</h4>
+    <p>Adjust on Dashboard to control lead mix</p>
+    <div class="split-mini">
+      <div><span style="color:var(--red)">No Website</span><span id="sb-no" style="color:var(--text)">70%</span></div>
+      <div><span style="color:var(--gold2)">Bad Website</span><span id="sb-bad" style="color:var(--text)">20%</span></div>
+      <div><span style="color:var(--sub)">OK Website</span><span id="sb-ok" style="color:var(--text)">10%</span></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+<div class="content">
+
+<!-- ═══ DASHBOARD ════════════════════════════════ -->
+<div class="page active" id="page-dashboard">
+
+  <div class="run-banner" id="run-banner">
+    <div class="rb-top">
+      <div class="spin"></div>
+      <div class="rb-txt">Pipeline <strong>running</strong> — <span id="rb-prog-txt">scraping in parallel…</span></div>
+      <div class="rb-timer" id="rb-timer">00:00</div>
+    </div>
+    <div class="rb-prog">
+      <div class="prog-lbl" id="rb-pct-txt">0% complete</div>
+      <div class="prog-track"><div class="prog-fill" id="rb-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="ph">
+    <div><h1>Lead Pipeline</h1><p>Scrape → Enrich → Deliver to Google Sheets</p></div>
+    <div class="ph-r">
+      <button class="btn btn-ghost btn-sm" onclick="refreshState()">↺ Refresh</button>
+      <button class="btn btn-gold" id="run-btn2" onclick="confirmRun()">⚡ Run Now</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="sc"><div class="sc-lbl">Total Leads</div>
+      <div class="sc-val gold" id="st-total">0</div>
+      <div class="sc-sub">All time collected</div></div>
+    <div class="sc"><div class="sc-lbl">Last Run</div>
+      <div class="sc-val" id="st-lr" style="font-size:1.05rem">Never</div>
+      <div class="sc-sub" id="st-lrc">no runs yet</div></div>
+    <div class="sc"><div class="sc-lbl">Target / Run</div>
+      <div class="sc-val gold" id="st-tgt">100</div>
+      <div class="sc-sub">leads per run</div></div>
+    <div class="sc"><div class="sc-lbl">Schedule</div>
+      <div class="sc-val" id="st-sched" style="font-size:1.05rem">Off</div>
+      <div class="sc-sub" id="st-sched-sub">automation disabled</div></div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-t">Daily Automation <span class="s">schedule</span></div>
+      <div class="row" style="justify-content:space-between;margin-bottom:.85rem">
+        <div>
+          <div style="font-size:.84rem;font-weight:500" id="tog-lbl">Enable daily automation</div>
+          <div style="font-size:.7rem;color:var(--dim);margin-top:.15rem" id="tog-sub">runs once per day at set time</div>
+        </div>
+        <label class="swt"><input type="checkbox" id="auto-tog" onchange="toggleAuto()"><span class="stt"></span></label>
+      </div>
+      <div class="divider"></div>
+      <div class="label">Run time (IST)</div>
+      <div class="row" style="gap:.7rem;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <div class="label" style="margin-bottom:.25rem;font-size:.6rem">TIME</div>
+          <input type="time" id="sc-time" value="09:00"
+            style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);
+            border-radius:var(--r2);padding:.3rem .55rem;font-size:.8rem;font-family:var(--mono);width:108px">
+        </div>
+        <div>
+          <div class="label" style="margin-bottom:.25rem;font-size:.6rem">LEADS / RUN</div>
+          <div class="ld-pick" id="ld-pick">
+            <div class="ld-opt" data-v="50"  onclick="pickLeads(50,this)">50</div>
+            <div class="ld-opt sel" data-v="100" onclick="pickLeads(100,this)">100</div>
+            <div class="ld-opt" data-v="150" onclick="pickLeads(150,this)">150</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="saveSchedule()">Save</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">Time Estimate <span class="s">current selection</span></div>
+      <div class="eta-box" id="eta-box">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Quality Split -->
+  <div class="card full">
+    <div class="card-t">Lead Quality Split
+      <button class="btn btn-ghost btn-sm" onclick="saveSplit()">Apply Split</button>
+    </div>
+    <p style="font-size:.77rem;color:var(--dim);margin-bottom:.9rem">
+      Drag handles to control the lead mix.
+      <span style="color:var(--red);font-weight:600">No-website</span> businesses are the hottest prospects.
+    </p>
+    <div class="split-labels">
+      <span>No Website <strong id="lno">70</strong>%</span>
+      <span>Bad Website <strong id="lbad">20</strong>%</span>
+      <span>OK Website <strong id="lok">10</strong>%</span>
+    </div>
+    <div class="split-track" id="strack">
+      <div class="sno"  id="sno" ></div>
+      <div class="sbad" id="sbad"></div>
+      <div class="sok"  id="sok" ></div>
+      <div class="thumb th-no"  id="th-no"  style="left:70%"></div>
+      <div class="thumb th-bad" id="th-bad" style="left:90%"></div>
+    </div>
+    <div class="split-inputs">
+      <div class="si"><label>No Website</label><div class="si-row"><input type="number" id="p-no" value="70" min="0" max="100" oninput="syncIn()"><span class="pct">%</span></div></div>
+      <div class="si"><label>Bad Website</label><div class="si-row"><input type="number" id="p-bad" value="20" min="0" max="100" oninput="syncIn()"><span class="pct">%</span></div></div>
+      <div class="si"><label>OK Website</label><div class="si-row"><input type="number" id="p-ok" value="10" disabled style="opacity:.35"><span class="pct">%</span></div></div>
+    </div>
+    <div class="split-legend">
+      <div class="sleg"><div class="sleg-dot" style="background:var(--red)"></div>No website — zero web presence (highest priority)</div>
+      <div class="sleg"><div class="sleg-dot" style="background:var(--gold3)"></div>Bad website — Wix, Blogspot, free builders</div>
+      <div class="sleg"><div class="sleg-dot" style="background:var(--mute)"></div>OK website — has proper site, lower priority</div>
+    </div>
+  </div>
+
+  <!-- Cities -->
+  <div class="card full">
+    <div class="card-t">Target Cities <span class="s" id="city-count"></span>
+      <div class="tg-ctrl">
+        <button class="tgb all" onclick="setAll('city',true)">✦ All</button>
+        <button class="tgb" onclick="setAll('city',false)">None</button>
+      </div>
+    </div>
+    <div class="tg" id="city-tg"></div>
+  </div>
+
+  <!-- Categories -->
+  <div class="card full">
+    <div class="card-t">Business Categories <span class="s" id="cat-count"></span>
+      <div class="tg-ctrl">
+        <button class="tgb all" onclick="setAll('cat',true)">✦ All</button>
+        <button class="tgb" onclick="setAll('cat',false)">None</button>
+      </div>
+    </div>
+    <div class="tg" id="cat-tg"></div>
+  </div>
+
+</div><!-- /dashboard -->
+
+<!-- ═══ LEADS ═════════════════════════════════════ -->
+<div class="page" id="page-leads">
+  <div class="ph">
+    <div><h1>Collected Leads</h1><p>All leads from Google Sheets</p></div>
+  </div>
+  <div class="ttbar">
+    <input class="srch" id="lsrch" placeholder="Search name, city, phone, @instagram…" oninput="applyFil()">
+    <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+      <span class="fp on"  onclick="setFil('all',this)">All</span>
+      <span class="fp" onclick="setFil('none',this)">🔴 No Website</span>
+      <span class="fp" onclick="setFil('bad',this)">🟡 Bad Website</span>
+      <span class="fp" onclick="setFil('ig',this)">📷 Has Instagram</span>
+      <span class="fp" onclick="setFil('em',this)">✉ Has Email</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="loadLeads()" style="margin-left:auto">↺ Refresh</button>
+  </div>
+  <div class="tw">
+    <div class="tw-head">
+      <div class="tw-title">Leads</div>
+      <div class="tw-cnt" id="lcnt">—</div>
+    </div>
+    <div id="tbl-wrap"><div class="et">Click Refresh to load from Google Sheets</div></div>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ══════════════════════════════════ -->
+<div class="page" id="page-settings">
+  <div class="ph">
+    <div><h1>Settings</h1><p>API keys · schedule · volume</p></div>
+  </div>
+
+  <!-- Error alert -->
+  <div id="set-err" style="display:none;background:var(--reddim);border:1px solid rgba(255,79,106,.3);
+    border-radius:var(--r2);padding:.7rem 1rem;font-size:.8rem;color:var(--red);margin-bottom:.8rem"></div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-t">Google Maps API</div>
+      <div class="field">
+        <label>API Key</label>
+        <input type="password" id="s-maps" placeholder="AIzaSy…" autocomplete="off">
+        <div class="hint">Get free at <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> → Enable <strong>Places API (New)</strong> → Credentials → Create API Key</div>
+      </div>
+      <div class="vrow">
+        <button class="btn btn-ghost btn-sm" onclick="verifyKeys()">Verify Keys</button>
+        <span class="vs" id="vs-maps"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">Google Sheets</div>
+      <div class="field">
+        <label>Sheet ID</label>
+        <input type="text" id="s-sid" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs…">
+        <div class="hint">From the Sheet URL: …/spreadsheets/d/<strong style="color:var(--gold2)">ID HERE</strong>/edit</div>
+      </div>
+      <div class="field">
+        <label>Service Account JSON <span class="creds-ok" id="creds-ok"></span></label>
+        <textarea id="s-creds" placeholder='Paste the entire contents of your downloaded .json file here…'></textarea>
+        <div class="hint">
+          <a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank">IAM → Service Accounts</a> → Create → Keys → JSON → Download → paste all contents here.<br>
+          Then share your Sheet with the <strong>client_email</strong> from the JSON as Editor.
+        </div>
+      </div>
+      <span class="vs" id="vs-sh"></span>
+    </div>
+
+    <div class="card">
+      <div class="card-t">Hunter.io <span class="s">(optional — improves email finds)</span></div>
+      <div class="field">
+        <label>API Key</label>
+        <input type="password" id="s-hun" placeholder="Free at hunter.io — 25 searches/month" autocomplete="off">
+        <div class="hint">Sign up free at <a href="https://hunter.io" target="_blank">hunter.io</a>. Improves email discovery significantly.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">Schedule & Volume</div>
+      <div class="field">
+        <label>Daily Run Time (IST, 24h)</label>
+        <input type="time" id="s-time">
+      </div>
+      <div class="field">
+        <label>Leads Per Run</label>
+        <input type="number" id="s-leads" min="20" max="300" value="100">
+        <div class="hint">50–150 recommended. Pipeline runs in parallel — 100 leads ≈ 20 min.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="gap:.6rem;flex-wrap:wrap;margin-top:.3rem">
+    <button class="btn btn-gold" onclick="saveAll()">💾 Save All Settings</button>
+    <button class="btn btn-ghost" onclick="verifyKeys()">✓ Verify API Keys</button>
+    <span id="save-ok" style="font-size:.75rem;color:var(--green);display:none">✓ Saved successfully</span>
+  </div>
+</div>
+
+<!-- ═══ LOGS ═══════════════════════════════════════ -->
+<div class="page" id="page-logs">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+    <div><h1 style="font-size:1.3rem;font-weight:700;color:var(--bright)">Run Logs</h1>
+    <p style="font-size:.75rem;color:var(--dim);margin-top:.2rem">Live pipeline output</p></div>
+    <div class="row">
+      <button class="btn btn-ghost btn-sm" onclick="clearLog()">Clear</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadLogs()">↺ Refresh</button>
+    </div>
+  </div>
+  <div class="log-box" id="log-box">No logs yet.</div>
+</div>
+
+</div><!-- /content -->
+</main>
+</div><!-- /shell -->
+<div id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════
+   GLOBALS
+════════════════════════════════════════════ */
+let STATE       = {};
+let SETTINGS    = {};
+let ALL_LEADS   = [];
+let leadsFilter = 'all';
+let selLeads    = 100;
+let timerInt    = null;
+let timerSec    = 0;
+let pollInt     = null;
+
+const CITIES = ['Mumbai','Delhi','Bangalore','Pune','Hyderabad','Chennai',
+  'Ahmedabad','Kolkata','Jaipur','Surat','Chandigarh','Kochi',
+  'Nagpur','Indore','Lucknow','Coimbatore','Bhopal','Gurgaon','Noida','Vadodara'];
+const CATS = ['cafe','restaurant','real estate agent','salon','spa',
+  'retail store','clothing store','jewelry store','gym',
+  'dental clinic','interior designer','catering service',
+  'event planner','photography studio','coaching institute'];
+
+let aC = new Set(CITIES);
+let aK = new Set(CATS);
+
+const ETA_MAP = {50: '~15 min', 100: '~22 min', 150: '~35 min'};
+
+/* ════════════════════════════════════════════
+   FILE:// CHECK
+════════════════════════════════════════════ */
+if (location.protocol === 'file:') {
+  document.getElementById('file-warn').style.display = 'block';
+}
+
+/* ════════════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════════════ */
+function nav(id, el) {
+  showPage(id);
+  document.querySelectorAll('.tt').forEach(t => t.classList.remove('active'));
+  const tab = el || document.querySelector(`.tt[data-page="${id}"]`);
+  if (tab) tab.classList.add('active');
+  document.querySelectorAll('.ni').forEach(n =>
+    n.classList.toggle('active', n.dataset.page === id));
+  if (id === 'leads')    loadLeads();
+  if (id === 'logs')     loadLogs();
+  if (id === 'settings') populateSettings();
+}
+function navSide(id, el) {
+  showPage(id);
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.tt').forEach(t =>
+    t.classList.toggle('active', t.dataset.page === id));
+  if (id === 'leads')    loadLeads();
+  if (id === 'logs')     loadLogs();
+  if (id === 'settings') populateSettings();
+}
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+}
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+async function init() {
+  buildToggles();
+  try {
+    await loadSettingsFromServer();
+    await refreshState();
+  } catch(e) {
+    if (location.protocol !== 'file:') toast('Cannot connect — is python app.py running?', 'err');
+  }
+  updateEta();
+  setInterval(refreshState, 5000);
+}
+
+/* ════════════════════════════════════════════
+   LOAD SETTINGS FROM SERVER
+════════════════════════════════════════════ */
+async function loadSettingsFromServer() {
+  const r = await fetch('/api/settings');
+  if (!r.ok) throw new Error('Settings fetch failed');
+  SETTINGS = await r.json();
+
+  // Apply to dashboard controls
+  const sc = document.getElementById('sc-time');
+  if (sc) sc.value = SETTINGS.schedule_time || '09:00';
+
+  const savedLeads = parseInt(SETTINGS.leads_per_run) || 100;
+  const nearest    = [50, 100, 150].reduce((a, b) =>
+    Math.abs(b - savedLeads) < Math.abs(a - savedLeads) ? b : a);
+  selLeads = nearest;
+  document.querySelectorAll('.ld-opt').forEach(o =>
+    o.classList.toggle('sel', +o.dataset.v === nearest));
+
+  // Split
+  const sp = SETTINGS.quality_split || {no:70, bad:20, ok:10};
+  setSplit(sp.no ?? 70, sp.bad ?? 20);
+
+  // City/cat active sets
+  if (SETTINGS.active_cities && SETTINGS.active_cities.length)
+    aC = new Set(SETTINGS.active_cities);
+  if (SETTINGS.active_cats && SETTINGS.active_cats.length)
+    aK = new Set(SETTINGS.active_cats);
+  buildToggles();
+  updateEta();
+}
+
+/* ════════════════════════════════════════════
+   STATE REFRESH
+════════════════════════════════════════════ */
+async function refreshState() {
+  try {
+    const r = await fetch('/api/state');
+    STATE = await r.json();
+  } catch(e) { return; }
+
+  const dot = document.getElementById('sb-dot');
+  const txt = document.getElementById('sb-txt');
+  if (STATE.running) {
+    dot.className = 'dot run'; txt.textContent = 'Running';
+  } else if (STATE.automation_on) {
+    dot.className = 'dot on'; txt.textContent = 'Auto On';
+  } else {
+    dot.className = 'dot idle'; txt.textContent = 'Idle';
+  }
+
+  // Stat cards
+  $('st-total').textContent   = STATE.total_leads || 0;
+  $('st-lr').textContent      = STATE.last_run ? STATE.last_run.slice(0,10) : 'Never';
+  $('st-lrc').textContent     = STATE.last_run_count ? STATE.last_run_count + ' leads found' : 'no runs yet';
+  $('st-tgt').textContent     = selLeads;
+  $('st-sched').textContent   = STATE.automation_on ? (SETTINGS.schedule_time || '—') : 'Off';
+  $('st-sched-sub').textContent = STATE.automation_on
+    ? `runs daily at ${SETTINGS.schedule_time} IST` : 'automation disabled';
+
+  // Toggle
+  const tog = $('auto-tog');
+  if (tog) tog.checked = !!STATE.automation_on;
+  $('tog-lbl').textContent = STATE.automation_on
+    ? `Auto ON — runs at ${SETTINGS.schedule_time} IST` : 'Enable daily automation';
+  $('tog-sub').textContent = STATE.automation_on
+    ? 'pipeline runs automatically every day' : 'runs once per day at set time';
+
+  // Run buttons
+  const running = !!STATE.running;
+  [$('run-btn'), $('run-btn2')].forEach(b => {
+    if (!b) return;
+    b.disabled = running;
+    b.textContent = running ? '⏳ Running…' : '⚡ Run Now';
+  });
+
+  // Dashboard banner
+  const banner = $('run-banner');
+  banner.style.display = running ? 'block' : 'none';
+  if (running && STATE.progress) {
+    $('rb-prog-txt').textContent = STATE.progress;
+    const pct = STATE.progress_pct || 0;
+    $('rb-fill').style.width = pct + '%';
+    $('rb-pct-txt').textContent = pct + '% complete';
+  }
+
+  // If modal open, update it
+  if ($('modal').classList.contains('open')) {
+    updateModal();
+    if (!STATE.running) {
+      // run finished
+      stopTimer();
+      $('modal-close-btn').disabled = false;
+      $('modal-close-btn').textContent = 'Done ✓';
+      $('modal-status').style.color = 'var(--green)';
+      $('modal-status').textContent = STATE.last_error
+        ? '❌ ' + STATE.last_error
+        : `✅ Done! ${STATE.last_run_count} leads written to Sheet.`;
+      $('mp-fill').style.width = '100%';
+      $('mp-pct').textContent  = '100%';
+    }
+  }
+
+  // If run just completed and modal not open, update banner
+  if (!running && STATE.last_error) {
+    $('rb-prog-txt').textContent = '❌ ' + STATE.last_error;
+  }
+}
+
+/* ════════════════════════════════════════════
+   RUN NOW — CONFIRM + MODAL
+════════════════════════════════════════════ */
+async function confirmRun() {
+  if (STATE.running) { toast('Pipeline is already running', 'err'); return; }
+
+  // Check keys first
+  const s = SETTINGS;
+  if (!s.google_maps_key && !s.has_creds) {
+    toast('⚠ Go to Settings and enter your API keys first', 'err');
+    nav('settings', null);
+    return;
+  }
+  if (!s.google_maps_key) {
+    toast('⚠ Google Maps API key is missing — go to Settings', 'err');
+    nav('settings', null);
+    return;
+  }
+
+  // Open modal
+  openModal();
+
+  // Trigger run
+  try {
+    const resp = await fetch('/api/run-now', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({})
+    });
+    const d = await resp.json();
+    if (!d.ok) {
+      closeModal();
+      toast(d.msg || 'Failed to start', 'err');
+      return;
+    }
+    // Start polling
+    await refreshState();
+    startPoll();
+  } catch(e) {
+    closeModal();
+    toast('Connection error — is python app.py running?', 'err');
+  }
+}
+
+function openModal() {
+  const c = aC.size, k = aK.size;
+  $('md-leads').textContent  = selLeads;
+  $('md-eta').textContent    = ETA_MAP[selLeads] || '~20 min';
+  $('md-cities').textContent = c;
+  $('md-cats').textContent   = k;
+  $('timer-val').textContent = '00:00';
+  $('mp-fill').style.width   = '0%';
+  $('mp-pct').textContent    = '0%';
+  $('mp-lbl').textContent    = 'Initialising…';
+  $('modal-status').textContent = 'Starting pipeline…';
+  $('modal-status').style.color = '';
+  $('modal-close-btn').disabled = true;
+  $('modal-close-btn').textContent = 'Close';
+  $('modal').classList.add('open');
+  timerSec = 0;
+  timerInt = setInterval(() => {
+    timerSec++;
+    const m = String(Math.floor(timerSec/60)).padStart(2,'0');
+    const s = String(timerSec%60).padStart(2,'0');
+    $('timer-val').textContent = m + ':' + s;
+    $('rb-timer').textContent  = m + ':' + s;
+  }, 1000);
+}
+
+function updateModal() {
+  if (!STATE.progress) return;
+  $('modal-status').textContent = STATE.progress;
+  $('mp-lbl').textContent       = STATE.progress;
+  const pct = STATE.progress_pct || 0;
+  $('mp-fill').style.width  = pct + '%';
+  $('mp-pct').textContent   = pct + '%';
+}
+
+function stopTimer() {
+  if (timerInt) { clearInterval(timerInt); timerInt = null; }
+}
+
+function startPoll() {
+  if (pollInt) clearInterval(pollInt);
+  pollInt = setInterval(async () => {
+    await refreshState();
+    if (!STATE.running && pollInt) {
+      clearInterval(pollInt); pollInt = null;
+    }
+  }, 3000);
+}
+
+function closeModal() {
+  stopTimer();
+  $('modal').classList.remove('open');
+}
+
+/* ════════════════════════════════════════════
+   TOGGLE AUTO
+════════════════════════════════════════════ */
+async function toggleAuto() {
+  try {
+    await fetch('/api/toggle', {method:'POST'});
+    await refreshState();
+    toast(STATE.automation_on ? 'Automation enabled' : 'Automation paused',
+          STATE.automation_on ? 'ok' : 'info');
+  } catch(e) { toast('Error — is server running?', 'err'); }
+}
+
+/* ════════════════════════════════════════════
+   SCHEDULE SAVE
+════════════════════════════════════════════ */
+async function saveSchedule() {
+  const t = $('sc-time').value;
+  await postSettings({schedule_time: t, leads_per_run: selLeads});
+  SETTINGS.schedule_time  = t;
+  SETTINGS.leads_per_run  = selLeads;
+  toast('Schedule saved', 'ok');
+  await refreshState();
+}
+
+/* ════════════════════════════════════════════
+   LEADS PICKER
+════════════════════════════════════════════ */
+function pickLeads(v, el) {
+  selLeads = v;
+  document.querySelectorAll('.ld-opt').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  $('st-tgt').textContent = v;
+  SETTINGS.leads_per_run  = v;
+  updateEta();
+}
+
+/* ════════════════════════════════════════════
+   ETA
+════════════════════════════════════════════ */
+function updateEta() {
+  const l  = selLeads || 100;
+  const cc = aC.size, kk = aK.size;
+  // Parallel scrape: combos / 8 workers * ~4s each
+  const sc = Math.max(1, Math.round((Math.min(cc*kk, l*3) * 4) / 8 / 60));
+  // Parallel enrichment: leads / 10 workers * ~2s each
+  const en = Math.max(1, Math.round((l * 2) / 10 / 60));
+  const tot = sc + en;
+  $('eta-box').innerHTML =
+    `<strong>${tot} min</strong> estimated (fully parallel)<br><br>` +
+    `${cc} cities × ${kk} categories → ~${sc} min scrape<br>` +
+    `${l} leads enriched in parallel → ~${en} min<br>` +
+    `Batch write to Sheets → instant<br><br>` +
+    `<span style="color:var(--mute)">Maps · JustDial · Email · Instagram — all parallel</span>`;
+}
+
+/* ════════════════════════════════════════════
+   SPLIT BAR
+════════════════════════════════════════════ */
+function setSplit(no, bad) {
+  no  = Math.max(0, Math.min(100, Math.round(no)));
+  bad = Math.max(0, Math.min(100 - no, Math.round(bad)));
+  const ok = 100 - no - bad;
+  $('sno').style.width    = no + '%';
+  $('sbad').style.left    = no + '%';
+  $('sbad').style.width   = bad + '%';
+  $('sok').style.width    = ok + '%';
+  $('th-no').style.left   = no + '%';
+  $('th-bad').style.left  = (no + bad) + '%';
+  $('lno').textContent    = no;
+  $('lbad').textContent   = bad;
+  $('lok').textContent    = ok;
+  $('p-no').value         = no;
+  $('p-bad').value        = bad;
+  $('p-ok').value         = ok;
+  $('sb-no').textContent  = no + '%';
+  $('sb-bad').textContent = bad + '%';
+  $('sb-ok').textContent  = ok + '%';
+}
+
+function syncIn() {
+  const no  = Math.min(100, Math.max(0, +($('p-no').value) || 0));
+  const bad = Math.min(100-no, Math.max(0, +($('p-bad').value) || 0));
+  setSplit(no, bad);
+}
+
+async function saveSplit() {
+  const no  = +($('p-no').value) || 70;
+  const bad = +($('p-bad').value) || 20;
+  await postSettings({quality_split: {no, bad, ok: 100 - no - bad}});
+  toast(`Split saved — ${no}% no-site · ${bad}% bad · ${100-no-bad}% ok`, 'ok');
+}
+
+// Drag logic
+(function() {
+  let dragging = null;
+  document.addEventListener('mousedown', e => {
+    if (e.target.id === 'th-no')  dragging = 'no';
+    if (e.target.id === 'th-bad') dragging = 'bad';
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const rect = $('strack').getBoundingClientRect();
+    const p    = Math.round(Math.max(0, Math.min(100, (e.clientX - rect.left) / rect.width * 100)));
+    let no  = +($('p-no').value) || 70;
+    let bad = +($('p-bad').value) || 20;
+    if (dragging === 'no')  no  = Math.min(p, 100 - bad);
+    if (dragging === 'bad') bad = Math.max(0, Math.min(p - no, 100 - no));
+    setSplit(no, bad);
+  });
+  document.addEventListener('mouseup', () => dragging = null);
+})();
+
+/* ════════════════════════════════════════════
+   TOGGLES (city/cat)
+════════════════════════════════════════════ */
+function buildToggles() {
+  const ct = $('city-tg'), kt = $('cat-tg');
+  if (ct) ct.innerHTML = CITIES.map(c =>
+    `<span class="tog${aC.has(c)?' on':''}" onclick="togItem('city','${c}',this)">${c}</span>`
+  ).join('');
+  if (kt) kt.innerHTML = CATS.map(c =>
+    `<span class="tog${aK.has(c)?' on':''}" onclick="togItem('cat','${c}',this)">${c}</span>`
+  ).join('');
+  const cc = $('city-count'); if (cc) cc.textContent = `${aC.size} / ${CITIES.length} selected`;
+  const kc = $('cat-count');  if (kc) kc.textContent = `${aK.size} / ${CATS.length} selected`;
+}
+
+function togItem(type, val, el) {
+  const s = type === 'city' ? aC : aK;
+  s.has(val) ? s.delete(val) : s.add(val);
+  el.classList.toggle('on');
+  saveCC(); buildToggles(); updateEta();
+}
+
+function setAll(type, on) {
+  const s = type === 'city' ? aC : aK;
+  const a = type === 'city' ? CITIES : CATS;
+  on ? a.forEach(x => s.add(x)) : s.clear();
+  buildToggles(); saveCC(); updateEta();
+}
+
+async function saveCC() {
+  await postSettings({active_cities: [...aC], active_cats: [...aK]});
+}
+
+/* ════════════════════════════════════════════
+   SETTINGS PAGE
+════════════════════════════════════════════ */
+function populateSettings() {
+  $('s-maps').value  = SETTINGS.google_maps_key || '';
+  $('s-sid').value   = SETTINGS.sheet_id || '';
+  $('s-hun').value   = SETTINGS.hunter_key || '';
+  $('s-time').value  = SETTINGS.schedule_time || '09:00';
+  $('s-leads').value = SETTINGS.leads_per_run || 100;
+  $('creds-ok').textContent = SETTINGS.has_creds ? '✓ saved' : '';
+  // Don't re-show creds JSON for security
+}
+
+async function saveAll() {
+  $('set-err').style.display = 'none';
+  const p = {
+    google_maps_key: $('s-maps').value.trim(),
+    sheet_id:        $('s-sid').value.trim(),
+    hunter_key:      $('s-hun').value.trim(),
+    schedule_time:   $('s-time').value,
+    leads_per_run:   +($('s-leads').value) || 100,
+  };
+  const cr = $('s-creds').value.trim();
+  if (cr) {
+    // Validate JSON before saving
+    try { JSON.parse(cr); p.creds_json = cr; }
+    catch(e) {
+      $('set-err').textContent = '❌ Service Account JSON is not valid JSON — check for copy errors';
+      $('set-err').style.display = 'block';
+      return;
+    }
+  }
+  try {
+    await postSettings(p);
+    SETTINGS = {...SETTINGS, ...p};
+    if (cr) SETTINGS.has_creds = true;
+    $('creds-ok').textContent = SETTINGS.has_creds ? '✓ saved' : '';
+    const el = $('save-ok');
+    el.style.display = 'inline';
+    setTimeout(() => el.style.display = 'none', 3000);
+    toast('Settings saved', 'ok');
+
+    // Also update dashboard controls
+    const sc = $('sc-time'); if (sc) sc.value = p.schedule_time;
+    updateEta();
+  } catch(e) {
+    toast('Save failed — check connection', 'err');
+  }
+}
+
+async function verifyKeys() {
+  await saveAll();
+  $('vs-maps').textContent = 'checking…';
+  $('vs-maps').className   = 'vs checking';
+  $('vs-sh').textContent   = 'checking…';
+  $('vs-sh').className     = 'vs checking';
+
+  try {
+    const r = await fetch('/api/verify-keys', {method:'POST'});
+    const d = await r.json();
+
+    const vm = $('vs-maps');
+    if (d.google_maps === 'ok') {
+      vm.textContent = '✓ Maps key valid';
+      vm.className   = 'vs ok';
+    } else {
+      vm.textContent = '✗ ' + d.google_maps;
+      vm.className   = 'vs err';
+    }
+
+    const vs = $('vs-sh');
+    if (d.google_sheets === 'ok') {
+      vs.textContent = '✓ Sheet connected';
+      vs.className   = 'vs ok';
+    } else {
+      vs.textContent = '✗ ' + d.google_sheets;
+      vs.className   = 'vs err';
+    }
+  } catch(e) {
+    $('vs-maps').textContent = '✗ Cannot reach server';
+    $('vs-maps').className   = 'vs err';
+    $('vs-sh').textContent   = '';
+    toast('Cannot connect — is python app.py running?', 'err');
+  }
+}
+
+/* ════════════════════════════════════════════
+   LEADS TABLE
+════════════════════════════════════════════ */
+async function loadLeads() {
+  $('tbl-wrap').innerHTML = '<div class="et"><div class="spin" style="margin:2rem auto;width:20px;height:20px"></div><div style="margin-top:.5rem">Loading from Google Sheets…</div></div>';
+  try {
+    const r = await fetch('/api/leads');
+    const d = await r.json();
+    if (d.error && !d.leads?.length) {
+      $('tbl-wrap').innerHTML = `<div class="et" style="color:var(--red)">${d.error}</div>`;
+      return;
+    }
+    ALL_LEADS = d.leads || [];
+    $('lcnt').textContent = `${ALL_LEADS.length} total leads`;
+    applyFil();
+  } catch(e) {
+    $('tbl-wrap').innerHTML = '<div class="et" style="color:var(--red)">Cannot connect — is python app.py running?</div>';
+  }
+}
+
+function setFil(f, el) {
+  document.querySelectorAll('.fp').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  leadsFilter = f;
+  applyFil();
+}
+
+function applyFil() {
+  const q = ($('lsrch')?.value || '').toLowerCase();
+  const rows = ALL_LEADS.filter(l => {
+    const ws = (l['Website Status'] || '').toLowerCase();
+    if (leadsFilter === 'none' && ws !== 'none')       return false;
+    if (leadsFilter === 'bad'  && ws !== 'bad')        return false;
+    if (leadsFilter === 'ig'   && !l['Instagram'])     return false;
+    if (leadsFilter === 'em'   && !l['Email'])         return false;
+    if (q) return Object.values(l).join(' ').toLowerCase().includes(q);
+    return true;
+  });
+  $('lcnt').textContent = `${rows.length} of ${ALL_LEADS.length} leads`;
+  renderTable(rows);
+}
+
+function renderTable(leads) {
+  if (!leads.length) {
+    $('tbl-wrap').innerHTML = '<div class="et">No leads match the current filter</div>';
+    return;
+  }
+  const rows = leads.map(l => {
+    const ws  = (l['Website Status'] || '').toLowerCase();
+    const sc  = +l['Score'] || 0;
+    const ig  = l['Instagram'] || '';
+    const ph  = l['Phone'] || '';
+    const em  = l['Email'] || '';
+    const wb  = ws === 'none' ? '<span class="wb w-none">NO SITE</span>'
+              : ws === 'bad'  ? '<span class="wb w-bad">BAD SITE</span>'
+                              : '<span class="wb w-ok">HAS SITE</span>';
+    const sr  = sc >= 70 ? 'hot' : sc >= 40 ? 'warm' : 'cold';
+    return `<tr>
+      <td style="min-width:150px"><div class="bn">${esc(l['Business Name'] || '—').slice(0,26)}</div>
+        <div class="bsub">${esc(l['Category'] || '')}</div></td>
+      <td style="min-width:90px">${esc(l['City'] || '—')}</td>
+      <td style="min-width:125px">
+        <div style="font-size:.74rem;font-family:var(--mono);color:var(--text)">${esc(ph || '—')}</div>
+        ${em ? `<div style="font-size:.66rem;color:var(--dim);font-family:var(--mono)">${esc(em)}</div>` : ''}
+      </td>
+      <td>${ig ? `<span class="ig">${esc(ig)}</span>` : '<span class="no-ig">—</span>'}</td>
+      <td>${wb}</td>
+      <td><div class="sr ${sr}">${sc}</div></td>
+      <td style="font-size:.66rem;color:var(--mute);font-family:var(--mono)">${esc(l['Date Found'] || '—')}</td>
+    </tr>`;
+  }).join('');
+  $('tbl-wrap').innerHTML = `<div style="overflow-x:auto">
+    <table><thead><tr>
+      <th>Business</th><th>City</th><th>Contact</th>
+      <th>Instagram</th><th>Website</th><th>Score</th><th>Date</th>
+    </tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+/* ════════════════════════════════════════════
+   LOGS
+════════════════════════════════════════════ */
+async function loadLogs() {
+  try {
+    const r = await fetch('/api/logs');
+    const d = await r.json();
+    const b = $('log-box');
+    b.innerHTML = (d.log || 'No logs yet.')
+      .replace(/✅[^\n]*/g, s => `<span class="lok">${s}</span>`)
+      .replace(/❌[^\n]*/g, s => `<span class="lerr">${s}</span>`)
+      .replace(/={3,}[^\n]*/g, s => `<span class="lhead">${s}</span>`)
+      .replace(/🔍[^\n]*/g, s => `<span class="linfo">${s}</span>`);
+    b.scrollTop = b.scrollHeight;
+  } catch(e) {
+    $('log-box').textContent = 'Cannot load logs — is server running?';
+  }
+}
+
+async function clearLog() {
+  try { await fetch('/api/clear-log', {method:'POST'}); loadLogs(); }
+  catch(e) {}
+}
+
+/* ════════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════════ */
+function $(id) { return document.getElementById(id); }
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function postSettings(data) {
+  const r = await fetch('/api/settings', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('Save failed');
+  return r.json();
+}
+
+let toastTimer = null;
+function toast(msg, type = 'ok') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className   = type;
+  t.style.display = 'block';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.style.display = 'none', 3500);
+}
+
+/* ════════════════════════════════════════════
+   BOOT
+════════════════════════════════════════════ */
+init();
+</script>
+</body>
+</html>
