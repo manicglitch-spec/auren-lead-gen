@@ -17,7 +17,7 @@ SETTINGS_FILE = os.path.join(BASE_DIR,"settings.json")
 STATE_FILE = os.path.join(BASE_DIR,"state.json")
 LOG_FILE = os.path.join(BASE_DIR,"run.log")
 
-FRONTEND = os.path.join(BASE_DIR,"index.html")
+FRONTEND = os.path.join(BASE_DIR,"frontend","index.html")
 
 # ---------------------------------------------------------
 # DEFAULT SETTINGS
